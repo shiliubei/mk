@@ -1,59 +1,54 @@
 package examples;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+
 public class BinarySearch {
 
+    static final Logger logger = LogManager.getLogger(BinarySearch.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         String path = "//C:/Job_Projects/files/digits.txt";
-        File f = new File(path);
-        long min = 0;
-        long max = f.length();
+        File fth = new File(path);
+        RandomAccessFile raf = new RandomAccessFile(fth, "r");
+        long max = fth.length();
         System.out.println("bytes count= " + max);
-        int val = 3;
-        for (long i = search(val) + 1; i < max; i++) {
-            if (takeValue(i) > val) {
-                System.out.println(takeValue(i));
-            } else {
-                System.out.println(" ");
+        int val = 1;
+        if (val<takeValue(max-1, raf)&& val > takeValue(0, raf)) {
+            for (long i = search(val, 0, max, raf) + 1; i < max; i++) {
+                if (takeValue(i, raf) > val)
+                    System.out.printf("%s, ", takeValue(i, raf));
             }
-
+        } else {
+            logger.info("No values found");
         }
-
     }
 
-    public static long search(int val) {
-        String path = "//C:/Job_Projects/files/digits.txt";
-        File f = new File(path);
-        long max = f.length();
-        return search(val, 0, max);
-    }
-
-    private static long search(int val, long min, long max) {
+    private static long search(int val, long min, long max, RandomAccessFile f) {
 
         if (min > max) return -1;
-
         long mid = min + (max - min) / 2;
 
-        if (val < takeValue(mid)) {
-            return search(val, min, mid - 1);
-        } else if (val > takeValue(mid)) {
-            return search(val, mid + 1, max);
+        if (val < takeValue(mid, f)) {
+            return search(val, min, mid - 1, f);
+        } else if (val > takeValue(mid, f)) {
+            return search(val, mid + 1, max, f);
         } else {
             return mid;
         }
     }
 
-    private static long takeValue(long position) {
-        String path = "//C:/Job_Projects/files/digits.txt";
-        int value = -1;
+    private static long takeValue(long position, RandomAccessFile f) {
+        long value = -1;
         try {
-            RandomAccessFile raf = new RandomAccessFile(path, "r");
-            raf.seek(position);
-            value = Integer.valueOf(String.valueOf((char) raf.read()));
+            f.seek(position);
+            value = Integer.parseInt(String.valueOf((char) f.read()));
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -61,3 +56,4 @@ public class BinarySearch {
         return value;
     }
 }
+
