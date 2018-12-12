@@ -8,6 +8,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TakeStringFromFile {
     public static void main(String[] args) throws IOException, ParseException {
@@ -19,9 +21,9 @@ public class TakeStringFromFile {
 
         System.out.println(takeValue(0, raf));
         findEnd(120, raf, f);
-        System.out.println(findStart(120,raf));
+        System.out.println(findStart(120, raf));
 
-       /* String foundDate = "01/Aug/1995:00:00:12";
+        String foundDate = "01/Aug/1995:00:00:12";
 
         DateFormat format = new SimpleDateFormat("d/MMM/yyyy:H:m:s", Locale.ENGLISH);
         System.out.println(format);
@@ -29,46 +31,80 @@ public class TakeStringFromFile {
         boolean found = false;
         long start = 0;
         long end = max;
-        long mid = (max-start)/2;
+        long mid = (max + start) / 2;
 
-        while (found==false){
-
-            mid = (max-start)/2;
-            if(date>parseDate){
+        while (true) {
+            Date parseDate = getDate.getLine(mid, raf, f);
+            mid = (max + start) / 2;
+            if (date > parseDate) {
                 start = mid;
             }
-            if(date<parseDate){
-               max = mid;
-            }  else{
+            if (date < parseDate) {
+                max = mid;
+            } else {
                 found = true;
             }
 
-        } */
-        getLine(250,raf,f);
+        }
+        getLine(250, raf, f);
     }
 
-    public static void getLine(long position, RandomAccessFile raf, File f) throws IOException {
-        Date date = new Date();
-        int start = (int)findStart(position,raf);
-        int end = (int)findEnd(position,raf,f);
+    public static LogLine getLine(long position, RandomAccessFile raf, File f) throws IOException {
+        //String line = new String();
+        int start = (int) findStart(position, raf);
+        int end = (int) findEnd(position, raf, f);
         byte[] buffer = new byte[end - start];
-            //logger.info("No values found");
+        //logger.info("No values found");
         //^(?:[^\s]+\s){3}\[([^\]]*)\].*$
         try {
             raf.seek(start);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        raf.read(buffer, 0, end-start);
+        raf.read(buffer, 0, end - start);
         String text = new String(buffer, "US-ASCII");
         System.out.println(text);
-        //return date;
+        return new LogLine(text, start, end);
+
+    }
+
+    private static class LogLine {
+        private final String line;
+        private final long startPos;
+        private final long endPos;
+
+        LogLine(String line, long endPos, long startPos) {
+            this.line = line;
+            this.startPos = startPos;
+            this.endPos = endPos;
+        }
+
+        long getStartPos() {
+            return this.startPos;
+        }
+
+        long getEndPos() {
+            return this.endPos;
+        }
+
+        final Date getDate() throws ParseException {
+            //String foundDate = "01/Aug/1995:00:00:12";
+            DateFormat format = new SimpleDateFormat("d/MMM/yyyy:H:m:s", Locale.ENGLISH);
+            final String regex = "^(?:[^\\s]+\\s){3}\\[([^\\]]*)\\].*";
+            final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
+            final Matcher matcher = pattern.matcher(line);
+            matcher.find();
+            Date date = format.parse(matcher.group(1));
+            System.out.println(format);
+            return date;
+        }
+
     }
 
     private static long findEnd(long position, RandomAccessFile raf, File f) {
         long max = f.length();
-        if (!takeValue(position, raf).equals("\n")&&position!=max) {
-            while (!takeValue(position, raf).equals("\n")&&position!=max) {
+        if (!takeValue(position, raf).equals("\n") && position != max) {
+            while (!takeValue(position, raf).equals("\n") && position != max) {
                 System.out.println(takeValue(position, raf));
                 position++;
             }
@@ -77,9 +113,9 @@ public class TakeStringFromFile {
         return position;
     }
 
-    private static long findStart (long position, RandomAccessFile raf) {
-        if (!takeValue(position, raf).equals("\n")&&position!=0) {
-            while (!takeValue(position, raf).equals("\n")&&position!=0) {
+    private static long findStart(long position, RandomAccessFile raf) {
+        if (!takeValue(position, raf).equals("\n") && position != 0) {
+            while (!takeValue(position, raf).equals("\n") && position != 0) {
                 System.out.println(takeValue(position, raf));
                 position--;
             }
