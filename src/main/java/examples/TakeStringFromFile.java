@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 public class TakeStringFromFile {
     public static void main(String[] args) throws IOException, ParseException {
-        String path = "//C:/Job_Projects/files/nasalines.txt";
+        String path = "//C:/Job_Projects/files/nasa.txt";
         RandomAccessFile raf = new RandomAccessFile(path, "r");
         File f = new File(path);
         long max = f.length();
@@ -23,7 +23,7 @@ public class TakeStringFromFile {
         findEnd(120, raf, f);
         System.out.println(findStart(120, raf));
 
-        String foundDate = "01/Aug/1995:00:00:12";
+        String foundDate = "01/Aug/1995:00:00:44";
 
         DateFormat format = new SimpleDateFormat("d/MMM/yyyy:H:m:s", Locale.ENGLISH);
         System.out.println(format);
@@ -34,28 +34,30 @@ public class TakeStringFromFile {
         long mid = (max + start) / 2;
 
         while (true) {
-            Date parseDate = getDate.getLine(mid, raf, f);
+            LogLine line = getLine(mid, raf, f);
+            Date parseDate = line.getDate();
             mid = (max + start) / 2;
-            if (date > parseDate) {
+            if (date.compareTo(parseDate) > 0) {
+                System.out.println(">");
                 start = mid;
-            }
-            if (date < parseDate) {
-                max = mid;
             } else {
-                found = true;
+                if (date.compareTo(parseDate) < 0) {
+                    System.out.println("<");
+                    max = mid;
+                } else {
+                    System.out.println("Break");
+                    break;
+                }
             }
 
         }
-        getLine(250, raf, f);
+        //getLine(250, raf, f);
     }
 
     public static LogLine getLine(long position, RandomAccessFile raf, File f) throws IOException {
-        //String line = new String();
         int start = (int) findStart(position, raf);
         int end = (int) findEnd(position, raf, f);
         byte[] buffer = new byte[end - start];
-        //logger.info("No values found");
-        //^(?:[^\s]+\s){3}\[([^\]]*)\].*$
         try {
             raf.seek(start);
         } catch (IOException e) {
@@ -87,7 +89,7 @@ public class TakeStringFromFile {
             return this.endPos;
         }
 
-        final Date getDate() throws ParseException {
+        Date getDate() throws ParseException {
             //String foundDate = "01/Aug/1995:00:00:12";
             DateFormat format = new SimpleDateFormat("d/MMM/yyyy:H:m:s", Locale.ENGLISH);
             final String regex = "^(?:[^\\s]+\\s){3}\\[([^\\]]*)\\].*";
